@@ -2,8 +2,7 @@
 *.ppm
 
 mandelbrot_seq
-mandelbrot_pth
-mandelbrot_omp
+mandelbrot_mpi
 
 measurements/
 
