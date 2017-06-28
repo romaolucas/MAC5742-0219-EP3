@@ -69,8 +69,6 @@ void init(int argc, char *argv[]){
         sscanf(argv[3], "%lf", &c_y_min);
         sscanf(argv[4], "%lf", &c_y_max);
         sscanf(argv[5], "%d", &image_size);
-        printf("variables: \n");
-        printf("%lf, %lf, %lf, %lf, %d\n", c_x_min, c_x_max, c_y_min, c_y_max, image_size);
         i_x_max           = image_size;
         i_y_max           = image_size;
         image_buffer_size = image_size * image_size;
@@ -93,7 +91,6 @@ void compute_mandelbrot(int y_min, int y_max){
 
     double c_x;
     double c_y;
-
     for(i_y = y_min; i_y < y_max; i_y++){
         c_y = c_y_min + i_y * pixel_height;
 
@@ -147,18 +144,18 @@ int main(int argc, char *argv[]){
             //MPI_Send(&image_buffer, image_buffer_size*3, MPI_UNSIGNED_CHAR, i, MPI_COMM_WORLD);    
             y_min = i * step;
             y_max = y_min + step;
-            y_max = y_max + (i == numtasks -1) ? image_size % numtasks : 0;
-            MPI_Send(&y_min, 1, MPI_INT, i, MPI_COMM_WORLD);
-            MPI_Send(&y_max, 1, MPI_INT, i, MPI_COMM_WORLD);
+            if (i == numtasks - 1) 
+                y_max += image_size % numtasks;
+            MPI_Send(&y_min, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+            MPI_Send(&y_max, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
         }
         y_min = 0;
         y_max = step;
         compute_mandelbrot(y_min, y_max);
     } else {
         //MPI_Recv(&image_buffer, image_buffer_size*3, MPI_UNSIGNED_CHAR, i, MPI_COMM_WORLD);
-        MPI_Recv(&y_min, 1, MPI_INT, MASTER, MPI_COMM_WORLD, &status);
-        MPI_Recv(&y_max, 1, MPI_INT, MASTER, MPI_COMM_WORLD, &status);
-        printf("Process %d, y_min = %d, y_max = %d\n", taskid, y_min, y_max);
+        MPI_Recv(&y_min, 1, MPI_INT, MASTER, 1, MPI_COMM_WORLD, &status);
+        MPI_Recv(&y_max, 1, MPI_INT, MASTER, 1, MPI_COMM_WORLD, &status);
         compute_mandelbrot(y_min, y_max);
     }
     //write_to_file();
